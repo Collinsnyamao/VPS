@@ -43,6 +43,14 @@ wsServer.initialize(server);
 // Start server
 server.listen(config.port, () => {
     logger.info(`Server running in ${config.env} mode on port ${config.port}`);
+    const divider = '='.repeat(80);
+    console.log(divider);
+    console.log(`🚀 Server running in ${config.env} mode on port ${config.port}`);
+    console.log(`🔗 WebSocket server available at /ws/node`);
+    console.log(`🌐 ${config.env === 'production' ? 'HTTPS' : 'HTTP'} API available`);
+    console.log(`📝 Logging to console and ${config.logging.directory}`);
+    console.log(`💾 MongoDB connected at ${config.database.uri.split('@').pop()}`);
+    console.log(divider);
 });
 
 // Handle unhandled promise rejections
@@ -78,14 +86,3 @@ const shutdown = () => {
 // Listen for termination signals
 process.on('SIGTERM', shutdown);
 process.on('SIGINT', shutdown);
-
-server.listen(config.port, () => {
-    const divider = '='.repeat(80);
-    console.log(divider);
-    console.log(`🚀 Server running in ${config.env} mode on port ${config.port}`);
-    console.log(`🔗 WebSocket server available at /ws/node`);
-    console.log(`🌐 ${config.env === 'production' ? 'HTTPS' : 'HTTP'} API available`);
-    console.log(`📝 Logging to console and ${config.logging.directory}`);
-    console.log(`💾 MongoDB connected at ${config.database.uri.split('@').pop()}`);
-    console.log(divider);
-});
