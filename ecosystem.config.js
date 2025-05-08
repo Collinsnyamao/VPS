@@ -8,7 +8,7 @@ module.exports = {
             watch: false,
             max_memory_restart: '1G',
             env: {
-                NODE_ENV: production,
+                NODE_ENV: 'production',
                 PORT: 3000,
                 MONGODB_URI: 'mongodb://admin:a11Black$@localhost:27027/admin',
                 JWT_SECRET: 'YVcyFt+JcFVxnbGpfMdfhu0yGSodkjsAOKLHIcI5D5Y=',
