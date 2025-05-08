@@ -1,6 +1,7 @@
 // config/config.js
 require('dotenv').config();
 console.log('uri', process.env.MONGODB_URI);
+console.log('secret', process.env.NODE_SECRET);
 
 module.exports = {
     // Server configuration
