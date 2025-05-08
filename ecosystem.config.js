@@ -8,22 +8,20 @@ module.exports = {
             watch: false,
             max_memory_restart: '1G',
             env: {
-                NODE_ENV: 'development',
+                NODE_ENV: production,
                 PORT: 3000,
-                MONGODB_URI: 'mongodb://localhost:27027/sentinelDB',
-                JWT_SECRET: 'your_development_jwt_secret',
-                NODE_SECRET: 'your_development_node_secret',
-                LOG_LEVEL: 'debug'
-            },
-            env_production: {
-                NODE_ENV: 'production',
-                PORT: 443,
-                MONGODB_URI: 'mongodb://localhost:27027/sentinelDB',
-                JWT_SECRET: 'change_this_to_a_secure_random_string',
-                NODE_SECRET: 'change_this_to_a_secure_random_string',
+                MONGODB_URI: 'mongodb://admin:a11Black$@localhost:27027/admin',
+                JWT_SECRET: 'YVcyFt+JcFVxnbGpfMdfhu0yGSodkjsAOKLHIcI5D5Y=',
+                JWT_EXPIRES_IN: '1d',
+                NODE_SECRET: 'tZHR/XM3wFQZ9NAYjXCgjLtznD16SQY+K1mY+BW37QI=',
                 LOG_LEVEL: 'info',
-                SSL_PATH: '/etc/letsencrypt/live/your-domain.com'
-            }
+                LOG_MAX_FILES: '14d',
+                LOG_DIRECTORY: '/opt/sentinel-vps/logs',
+                RATE_LIMIT_WINDOW: 900000,
+                RATE_LIMIT_MAX: 100,
+                WS_HEARTBEAT_INTERVAL: 30000,
+                WS_HEARTBEAT_TIMEOUT: 60000,
+            },
         }
     ]
 };
