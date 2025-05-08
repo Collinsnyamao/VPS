@@ -23,6 +23,7 @@ mongoose
     .connect(config.database.uri, config.database.options)
     .then(() => {
         logger.info('MongoDB connected successfully');
+        console.info('MongoDB connected successfully');
     })
     .catch((err) => {
         logger.error('MongoDB connection error', { error: err.message });
