@@ -8,7 +8,7 @@ module.exports = {
 
     // MongoDB configuration
     database: {
-        uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/sentinel',
+        uri: process.env.MONGODB_URI || 'mongodb://localhost:27027/sentinelDB',
         options: {
             useNewUrlParser: true,
             useUnifiedTopology: true

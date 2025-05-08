@@ -10,7 +10,7 @@ module.exports = {
             env: {
                 NODE_ENV: 'development',
                 PORT: 3000,
-                MONGODB_URI: 'mongodb://localhost:27017/sentinel',
+                MONGODB_URI: 'mongodb://localhost:27027/sentinelDB',
                 JWT_SECRET: 'your_development_jwt_secret',
                 NODE_SECRET: 'your_development_node_secret',
                 LOG_LEVEL: 'debug'
@@ -18,7 +18,7 @@ module.exports = {
             env_production: {
                 NODE_ENV: 'production',
                 PORT: 443,
-                MONGODB_URI: 'mongodb://localhost:27017/sentinel',
+                MONGODB_URI: 'mongodb://localhost:27027/sentinelDB',
                 JWT_SECRET: 'change_this_to_a_secure_random_string',
                 NODE_SECRET: 'change_this_to_a_secure_random_string',
                 LOG_LEVEL: 'info',
