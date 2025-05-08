@@ -22,6 +22,10 @@ module.exports = {
                 WS_HEARTBEAT_INTERVAL: 30000,
                 WS_HEARTBEAT_TIMEOUT: 60000,
             },
+            output: 'STDOUT',  // Send stdout to terminal
+            error: 'STDERR',   // Send stderr to terminal
+            log_type: 'json',
+            merge_logs: true
         }
     ]
 };

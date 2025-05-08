@@ -1,45 +1,95 @@
-// config/config.js
-require('dotenv').config();
-console.log('uri', process.env.MONGODB_URI);
+const winston = require('winston');
+const { createLogger, format, transports } = winston;
+const DailyRotateFile = require('winston-daily-rotate-file');
+const path = require('path');
+const fs = require('fs');
+const config = require('./config');
 
-module.exports = {
-    // Server configuration
-    port: process.env.PORT || 3000,
-    env: process.env.NODE_ENV || 'development',
+// Create logs directory if it doesn't exist
+const logDir = config.logging.directory;
+if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+}
 
-    // MongoDB configuration
-    database: {
-        uri: process.env.MONGODB_URI || 'mongodb://localhost:27027/sentinelDB',
-        options: {
+// Define log format
+const logFormat = format.combine(
+    format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    format.errors({ stack: true }),
+    format.splat()
+);
 
-        }
-    },
+// Create JSON format for file logging
+const jsonFormat = format.combine(
+    logFormat,
+    format.json()
+);
 
-    // JWT configuration
-    jwt: {
-        secret: process.env.JWT_SECRET || 'your_development_jwt_secret',
-        expiresIn: process.env.JWT_EXPIRES_IN || '1d'
-    },
+// Create human-readable format for console
+const consoleFormat = format.combine(
+    logFormat,
+    format.colorize(),
+    format.printf(({ timestamp, level, message, ...meta }) => {
+        // Simplify metadata for console output
+        const metaString = Object.keys(meta).length
+            ? Object.keys(meta).map(key => {
+                if (key === 'service' || key === 'nodeId') return '';
 
-    // WebSocket configuration
-    websocket: {
-        path: '/ws/node',
-        heartbeatInterval: parseInt(process.env.WS_HEARTBEAT_INTERVAL || '30000'),
-        heartbeatTimeout: parseInt(process.env.WS_HEARTBEAT_TIMEOUT || '60000')
-    },
+                // Special handling for error objects
+                if (key === 'error' && typeof meta[key] === 'object') {
+                    return `${key}: ${meta[key].message || JSON.stringify(meta[key])}`;
+                }
 
-    // Security configuration
-    security: {
-        nodeSecret: process.env.NODE_SECRET || 'your_development_node_secret',
-        rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW || '900000'), // 15 minutes
-        rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '100') // 100 requests per window
-    },
+                // Handle nested objects
+                if (typeof meta[key] === 'object') {
+                    return `${key}: ${JSON.stringify(meta[key])}`;
+                }
 
-    // Logging configuration
-    logging: {
-        level: process.env.LOG_LEVEL || 'info',
-        maxFiles: process.env.LOG_MAX_FILES || '14d',
-        directory: process.env.LOG_DIRECTORY || './logs'
-    }
+                return `${key}: ${meta[key]}`;
+            }).filter(Boolean).join(', ')
+            : '';
+
+        const nodeId = meta.nodeId ? `[${meta.nodeId}] ` : '';
+        return `${timestamp} ${level}: ${nodeId}${message} ${metaString}`;
+    })
+);
+
+// Create file transports
+const fileTransport = new DailyRotateFile({
+    filename: path.join(logDir, 'sentinel-%DATE%.log'),
+    datePattern: 'YYYY-MM-DD',
+    maxFiles: config.logging.maxFiles,
+    level: config.logging.level,
+    format: jsonFormat
+});
+
+const errorFileTransport = new DailyRotateFile({
+    filename: path.join(logDir, 'sentinel-error-%DATE%.log'),
+    datePattern: 'YYYY-MM-DD',
+    maxFiles: config.logging.maxFiles,
+    level: 'error',
+    format: jsonFormat
+});
+
+// Create console transport
+const consoleTransport = new transports.Console({
+    level: config.logging.level,
+    format: consoleFormat
+});
+
+// Create logger with all transports
+const logger = createLogger({
+    level: config.logging.level,
+    defaultMeta: { service: 'sentinel-vps' },
+    transports: [
+        fileTransport,
+        errorFileTransport,
+        consoleTransport // Always include console transport
+    ]
+});
+
+// Stream for Morgan
+logger.stream = {
+    write: (message) => logger.http(message.trim())
 };
 
+module.exports = logger;
