@@ -1,4 +1,3 @@
-// config/logger.js
 const winston = require('winston');
 const { createLogger, format, transports } = winston;
 const DailyRotateFile = require('winston-daily-rotate-file');
@@ -16,8 +15,42 @@ if (!fs.existsSync(logDir)) {
 const logFormat = format.combine(
     format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     format.errors({ stack: true }),
-    format.splat(),
+    format.splat()
+);
+
+// Create JSON format for file logging
+const jsonFormat = format.combine(
+    logFormat,
     format.json()
+);
+
+// Create human-readable format for console
+const consoleFormat = format.combine(
+    logFormat,
+    format.colorize(),
+    format.printf(({ timestamp, level, message, ...meta }) => {
+        // Simplify metadata for console output
+        const metaString = Object.keys(meta).length
+            ? Object.keys(meta).map(key => {
+                if (key === 'service' || key === 'nodeId') return '';
+
+                // Special handling for error objects
+                if (key === 'error' && typeof meta[key] === 'object') {
+                    return `${key}: ${meta[key].message || JSON.stringify(meta[key])}`;
+                }
+
+                // Handle nested objects
+                if (typeof meta[key] === 'object') {
+                    return `${key}: ${JSON.stringify(meta[key])}`;
+                }
+
+                return `${key}: ${meta[key]}`;
+            }).filter(Boolean).join(', ')
+            : '';
+
+        const nodeId = meta.nodeId ? `[${meta.nodeId}] ` : '';
+        return `${timestamp} ${level}: ${nodeId}${message} ${metaString}`;
+    })
 );
 
 // Create file transports
@@ -25,41 +58,34 @@ const fileTransport = new DailyRotateFile({
     filename: path.join(logDir, 'sentinel-%DATE%.log'),
     datePattern: 'YYYY-MM-DD',
     maxFiles: config.logging.maxFiles,
-    level: config.logging.level
+    level: config.logging.level,
+    format: jsonFormat
 });
 
 const errorFileTransport = new DailyRotateFile({
     filename: path.join(logDir, 'sentinel-error-%DATE%.log'),
     datePattern: 'YYYY-MM-DD',
     maxFiles: config.logging.maxFiles,
-    level: 'error'
+    level: 'error',
+    format: jsonFormat
 });
 
-// Create console transport based on environment
+// Create console transport
 const consoleTransport = new transports.Console({
-    format: format.combine(
-        format.colorize(),
-        format.printf(({ timestamp, level, message, ...meta }) => {
-            return `${timestamp} ${level}: ${message} ${Object.keys(meta).length ? JSON.stringify(meta, null, 2) : ''}`;
-        })
-    )
+    level: config.logging.level,
+    format: consoleFormat
 });
 
-// Create logger
+// Create logger with all transports
 const logger = createLogger({
     level: config.logging.level,
-    format: logFormat,
     defaultMeta: { service: 'sentinel-vps' },
     transports: [
         fileTransport,
-        errorFileTransport
+        errorFileTransport,
+        consoleTransport // Always include console transport
     ]
 });
-
-// Add console transport if not in production
-if (config.env !== 'production') {
-    logger.add(consoleTransport);
-}
 
 // Stream for Morgan
 logger.stream = {
