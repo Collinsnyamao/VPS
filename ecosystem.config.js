@@ -10,7 +10,7 @@ module.exports = {
             env: {
                 NODE_ENV: 'production',
                 PORT: 3000,
-                MONGODB_URI: 'mongodb://admin:a11Black$@localhost:27027/sentinelDB',
+                MONGODB_URI: 'mongodb://admin:a11Black$@13.219.98.175:27027/sentinelDB?authSource=admin',
                 JWT_SECRET: 'YVcyFt+JcFVxnbGpfMdfhu0yGSodkjsAOKLHIcI5D5Y=',
                 JWT_EXPIRES_IN: '1d',
                 NODE_SECRET: 'tZHR/XM3wFQZ9NAYjXCgjLtznD16SQY+K1mY+BW37QI=',
