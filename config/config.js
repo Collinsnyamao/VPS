@@ -1,5 +1,6 @@
 // config/config.js
 require('dotenv').config();
+console.log('uri', process.env.MONGODB_URI);
 
 module.exports = {
     // Server configuration
@@ -10,8 +11,7 @@ module.exports = {
     database: {
         uri: process.env.MONGODB_URI || 'mongodb://localhost:27027/sentinelDB',
         options: {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
+
         }
     },
 
