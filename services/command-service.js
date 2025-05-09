@@ -2,20 +2,12 @@
 const { v4: uuidv4 } = require('uuid');
 const Command = require('../models/command');
 const wsServer = require('../websocket/server');
-const logger = require('../config/logger');
 
 // Store command callbacks for async operation
 const commandCallbacks = new Map();
 
 /**
  * Send a command to a specific node
- * @param {string} nodeId - Target node ID
- * @param {string} type - Command type
- * @param {Object} parameters - Command parameters
- * @param {string} initiatedBy - User ID or system identifier that initiated the command
- * @param {boolean} waitForResponse - Whether to wait for a response
- * @param {number} timeout - Timeout in milliseconds
- * @returns {Promise<Object>} - Command result or command object
  */
 exports.sendCommand = async (nodeId, type, parameters = {}, initiatedBy = 'system', waitForResponse = true, timeout = 30000) => {
     // Check if node is connected
@@ -38,11 +30,11 @@ exports.sendCommand = async (nodeId, type, parameters = {}, initiatedBy = 'syste
 
     await command.save();
 
-    // Prepare command message
+    // Prepare command message - format must match what worker expects
     const message = {
         type: 'command',
         commandId,
-        command: type,
+        command: type, // Worker expects 'command' field, not 'type'
         parameters,
         timestamp: new Date().toISOString()
     };
@@ -64,7 +56,7 @@ exports.sendCommand = async (nodeId, type, parameters = {}, initiatedBy = 'syste
     command.sent = new Date();
     await command.save();
 
-    logger.info(`Command ${commandId} sent to ${nodeId}`, { type, parameters });
+    console.log(`Command ${commandId} sent to ${nodeId}: ${type}`);
 
     // If not waiting for response, return command
     if (!waitForResponse) {
@@ -82,10 +74,7 @@ exports.sendCommand = async (nodeId, type, parameters = {}, initiatedBy = 'syste
                 { commandId },
                 { status: 'timeout', error: `Command timed out after ${timeout}ms` }
             ).catch(err => {
-                logger.error('Error updating command timeout status', {
-                    commandId,
-                    error: err.message
-                });
+                console.error(`Error updating command timeout status for ${commandId}: ${err.message}`);
             });
 
             reject(new Error(`Command timed out after ${timeout}ms`));
@@ -106,10 +95,6 @@ exports.sendCommand = async (nodeId, type, parameters = {}, initiatedBy = 'syste
 
 /**
  * Broadcast a command to all connected nodes
- * @param {string} type - Command type
- * @param {Object} parameters - Command parameters
- * @param {string} initiatedBy - User ID or system identifier that initiated the command
- * @returns {Promise<Object>} - Broadcast results
  */
 exports.broadcastCommand = async (type, parameters = {}, initiatedBy = 'system') => {
     // Get connected nodes
@@ -129,6 +114,8 @@ exports.broadcastCommand = async (type, parameters = {}, initiatedBy = 'system')
     // Count successes
     const sent = results.filter(result => result.status === 'fulfilled').length;
 
+    console.log(`Broadcast command ${type} to ${sent}/${connectedNodes.length} nodes`);
+
     return {
         sent,
         total: connectedNodes.length,
@@ -138,8 +125,6 @@ exports.broadcastCommand = async (type, parameters = {}, initiatedBy = 'system')
 
 /**
  * Notify completion of a command
- * @param {string} commandId - ID of the completed command
- * @param {Object} result - Command result
  */
 exports.notifyCommandCompletion = (commandId, result) => {
     const callback = commandCallbacks.get(commandId);
@@ -152,9 +137,6 @@ exports.notifyCommandCompletion = (commandId, result) => {
 
 /**
  * Get command history for a node
- * @param {string} nodeId - Node ID
- * @param {Object} options - Query options
- * @returns {Promise<Array>} - Command history
  */
 exports.getCommandHistory = async (nodeId, options = {}) => {
     const query = { nodeId };
@@ -191,8 +173,6 @@ exports.getCommandHistory = async (nodeId, options = {}) => {
 
 /**
  * Clean up old command records
- * @param {number} daysToKeep - Number of days to keep command records
- * @returns {Promise<number>} - Number of deleted records
  */
 exports.cleanupOldCommands = async (daysToKeep = 30) => {
     const cutoffDate = new Date();
@@ -202,12 +182,7 @@ exports.cleanupOldCommands = async (daysToKeep = 30) => {
         createdAt: { $lt: cutoffDate }
     });
 
-    logger.info(`Cleaned up ${result.deletedCount} old command records`, {
-        daysToKeep,
-        cutoffDate
-    });
+    console.log(`Cleaned up ${result.deletedCount} old command records (older than ${daysToKeep} days)`);
 
     return result.deletedCount;
 };
-
-

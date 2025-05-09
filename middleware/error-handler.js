@@ -1,17 +1,12 @@
 // middleware/error-handler.js
-const logger = require('../config/logger');
 
 /**
  * Central error handler middleware
  */
 exports.errorHandler = (err, req, res, next) => {
     // Log the error
-    logger.error('Unhandled error', {
-        error: err.message,
-        stack: err.stack,
-        path: req.path,
-        method: req.method
-    });
+    console.error(`Unhandled error: ${err.message}`);
+    console.error(err.stack);
 
     // Set status code
     const statusCode = err.statusCode || 500;
@@ -28,7 +23,7 @@ exports.errorHandler = (err, req, res, next) => {
  * 404 Not Found middleware
  */
 exports.notFound = (req, res, next) => {
-    logger.debug('Route not found', { path: req.path, method: req.method });
+    console.log(`Route not found: ${req.method} ${req.path}`);
 
     res.status(404).json({
         success: false,
@@ -37,7 +32,7 @@ exports.notFound = (req, res, next) => {
 };
 
 /**
- * Middleware to log detailed API request information
+ * Middleware to log request information
  */
 exports.requestLogger = (req, res, next) => {
     // Skip logging for health checks to reduce noise
@@ -50,19 +45,14 @@ exports.requestLogger = (req, res, next) => {
     res.on('finish', () => {
         const duration = Date.now() - start;
 
-        const logLevel = res.statusCode >= 500 ? 'error' :
-            res.statusCode >= 400 ? 'warn' :
-                'http';
-
-        logger.log(logLevel, `${req.method} ${req.path}`, {
-            method: req.method,
-            path: req.originalUrl || req.url,
-            statusCode: res.statusCode,
-            duration: `${duration}ms`,
-            ip: req.ip,
-            userAgent: req.get('user-agent'),
-            userId: req.user ? req.user.id : undefined
-        });
+        // Format log based on status code
+        if (res.statusCode >= 500) {
+            console.error(`${req.method} ${req.path} ${res.statusCode} - ${duration}ms`);
+        } else if (res.statusCode >= 400) {
+            console.warn(`${req.method} ${req.path} ${res.statusCode} - ${duration}ms`);
+        } else {
+            console.log(`${req.method} ${req.path} ${res.statusCode} - ${duration}ms`);
+        }
     });
 
     next();

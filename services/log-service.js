@@ -1,12 +1,8 @@
 // services/log-service.js
 const Log = require('../models/log');
-const logger = require('../config/logger');
 
 /**
  * Get logs with filtering and pagination
- * @param {Object} filters - Filter criteria
- * @param {Object} pagination - Pagination options
- * @returns {Promise<Object>} - Logs and count
  */
 exports.getLogs = async (filters = {}, pagination = {}) => {
     const query = {};
@@ -61,8 +57,6 @@ exports.getLogs = async (filters = {}, pagination = {}) => {
 
 /**
  * Get log statistics
- * @param {Object} filters - Filter criteria
- * @returns {Promise<Object>} - Log statistics
  */
 exports.getLogStats = async (filters = {}) => {
     const match = {};
@@ -119,7 +113,6 @@ exports.getLogStats = async (filters = {}) => {
             timeFormat = { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } };
             break;
         case 'week':
-            // This is a simplification - exact week calculations would require more complex logic
             timeFormat = { $dateToString: { format: '%Y-%U', date: '$timestamp' } };
             break;
         case 'month':
@@ -150,8 +143,6 @@ exports.getLogStats = async (filters = {}) => {
 
 /**
  * Clean up old logs
- * @param {number} daysToKeep - Number of days to keep logs
- * @returns {Promise<number>} - Number of deleted logs
  */
 exports.cleanupOldLogs = async (daysToKeep = 30) => {
     const cutoffDate = new Date();
@@ -161,19 +152,13 @@ exports.cleanupOldLogs = async (daysToKeep = 30) => {
         timestamp: { $lt: cutoffDate }
     });
 
-    logger.info(`Cleaned up ${result.deletedCount} old logs`, {
-        daysToKeep,
-        cutoffDate
-    });
+    console.log(`Cleaned up ${result.deletedCount} old logs (older than ${daysToKeep} days)`);
 
     return result.deletedCount;
 };
 
 /**
  * Add a system log
- * @param {string} level - Log level
- * @param {string} message - Log message
- * @param {Object} metadata - Additional metadata
  */
 exports.addSystemLog = async (level, message, metadata = {}) => {
     try {
@@ -184,9 +169,9 @@ exports.addSystemLog = async (level, message, metadata = {}) => {
             metadata
         }).save();
 
-        // Also log to application logger
-        logger[level](message, metadata);
+        // Also log to console
+        console[level](`[System] ${message}`);
     } catch (error) {
-        logger.error('Failed to add system log', { error: error.message });
+        console.error(`Failed to add system log: ${error.message}`);
     }
 };

@@ -3,7 +3,6 @@ const express = require('express');
 const { param, body, query } = require('express-validator');
 const nodeManager = require('../services/node-manager');
 const commandService = require('../services/command-service');
-const logger = require('../config/logger');
 const { validate } = require('../middleware/validation');
 const { authenticateJWT, authorizeRoles } = require('../middleware/auth');
 
@@ -31,7 +30,7 @@ router.get('/',
                 nodes
             });
         } catch (error) {
-            logger.error('Error getting nodes', { error: error.message });
+            console.error(`Error getting nodes: ${error.message}`);
             return res.status(500).json({
                 success: false,
                 message: 'Server error'
@@ -56,7 +55,7 @@ router.get('/status',
                 statusSummary
             });
         } catch (error) {
-            logger.error('Error getting status summary', { error: error.message });
+            console.error(`Error getting status summary: ${error.message}`);
             return res.status(500).json({
                 success: false,
                 message: 'Server error'
@@ -91,7 +90,7 @@ router.get('/:nodeId',
                 node
             });
         } catch (error) {
-            logger.error('Error getting node', { nodeId: req.params.nodeId, error: error.message });
+            console.error(`Error getting node ${req.params.nodeId}: ${error.message}`);
             return res.status(500).json({
                 success: false,
                 message: 'Server error'
@@ -127,7 +126,7 @@ router.put('/:nodeId',
                 node
             });
         } catch (error) {
-            logger.error('Error updating node', { nodeId: req.params.nodeId, error: error.message });
+            console.error(`Error updating node ${req.params.nodeId}: ${error.message}`);
 
             if (error.message.includes('not found')) {
                 return res.status(404).json({
@@ -162,6 +161,8 @@ router.post('/:nodeId/command',
             const { nodeId } = req.params;
             const { type, parameters, waitForResponse = true, timeout } = req.body;
 
+            console.log(`API Request: Sending command ${type} to node ${nodeId}`);
+
             const result = await commandService.sendCommand(
                 nodeId,
                 type,
@@ -177,11 +178,7 @@ router.post('/:nodeId/command',
                 result
             });
         } catch (error) {
-            logger.error('Error sending command', {
-                nodeId: req.params.nodeId,
-                command: req.body.type,
-                error: error.message
-            });
+            console.error(`Error sending command to ${req.params.nodeId}: ${error.message}`);
 
             if (error.message.includes('not connected')) {
                 return res.status(404).json({
@@ -221,6 +218,8 @@ router.post('/broadcast',
         try {
             const { type, parameters } = req.body;
 
+            console.log(`API Request: Broadcasting command ${type} to all nodes`);
+
             const result = await commandService.broadcastCommand(
                 type,
                 parameters || {},
@@ -233,10 +232,7 @@ router.post('/broadcast',
                 result
             });
         } catch (error) {
-            logger.error('Error broadcasting command', {
-                command: req.body.type,
-                error: error.message
-            });
+            console.error(`Error broadcasting command: ${error.message}`);
 
             return res.status(500).json({
                 success: false,
@@ -275,7 +271,7 @@ router.get('/:nodeId/commands',
                 commands
             });
         } catch (error) {
-            logger.error('Error getting command history', { nodeId: req.params.nodeId, error: error.message });
+            console.error(`Error getting command history for ${req.params.nodeId}: ${error.message}`);
             return res.status(500).json({
                 success: false,
                 message: 'Server error'
@@ -308,7 +304,7 @@ router.post('/:nodeId/restart',
                 result
             });
         } catch (error) {
-            logger.error('Error restarting node', { nodeId: req.params.nodeId, error: error.message });
+            console.error(`Error restarting node ${req.params.nodeId}: ${error.message}`);
 
             if (error.message.includes('not connected')) {
                 return res.status(404).json({
@@ -344,7 +340,7 @@ router.get('/:nodeId/metrics',
                 metrics
             });
         } catch (error) {
-            logger.error('Error getting node metrics', { nodeId: req.params.nodeId, error: error.message });
+            console.error(`Error getting node metrics for ${req.params.nodeId}: ${error.message}`);
 
             if (error.message.includes('not connected')) {
                 return res.status(404).json({

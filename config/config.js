@@ -1,7 +1,5 @@
 // config/config.js
 require('dotenv').config();
-console.log('uri', process.env.MONGODB_URI);
-console.log('secret', process.env.NODE_SECRET);
 
 module.exports = {
     // Server configuration
@@ -10,9 +8,10 @@ module.exports = {
 
     // MongoDB configuration
     database: {
-        uri: process.env.MONGODB_URI || 'mongodb://localhost:27027/sentinelDB',
+        uri: process.env.MONGODB_URI || 'mongodb://localhost:27017/sentinel',
         options: {
-
+            useNewUrlParser: true,
+            useUnifiedTopology: true
         }
     },
 
@@ -24,7 +23,7 @@ module.exports = {
 
     // WebSocket configuration
     websocket: {
-        path: '/ws/node',
+        path: '/ws/node', // This must match what workers are connecting to
         heartbeatInterval: parseInt(process.env.WS_HEARTBEAT_INTERVAL || '30000'),
         heartbeatTimeout: parseInt(process.env.WS_HEARTBEAT_TIMEOUT || '60000')
     },
@@ -34,13 +33,5 @@ module.exports = {
         nodeSecret: process.env.NODE_SECRET || 'your_development_node_secret',
         rateLimitWindow: parseInt(process.env.RATE_LIMIT_WINDOW || '900000'), // 15 minutes
         rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX || '100') // 100 requests per window
-    },
-
-    // Logging configuration
-    logging: {
-        level: process.env.LOG_LEVEL || 'info',
-        maxFiles: process.env.LOG_MAX_FILES || '14d',
-        directory: process.env.LOG_DIRECTORY || './logs'
     }
 };
-

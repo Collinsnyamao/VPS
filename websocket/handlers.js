@@ -1,5 +1,4 @@
 // websocket/handlers.js
-const logger = require('../config/logger');
 const Node = require('../models/node');
 const Log = require('../models/log');
 const Command = require('../models/command');
@@ -7,8 +6,6 @@ const commandService = require('../services/command-service');
 
 /**
  * Handler for heartbeat messages from nodes
- * @param {string} nodeId - ID of the sending node
- * @param {Object} data - Message data
  */
 exports.heartbeat = async (nodeId, data) => {
     try {
@@ -32,26 +29,20 @@ exports.heartbeat = async (nodeId, data) => {
             { upsert: true, new: true }
         );
 
-        // Log heartbeat at debug level (to avoid flooding logs)
-        logger.debug(`Heartbeat received from ${nodeId}`, {
-            metrics,
-            timestamp: data.timestamp
-        });
+        // Don't log every heartbeat to avoid console spam
     } catch (error) {
-        logger.error('Error processing heartbeat', { nodeId, error: error.message });
+        console.error(`Error processing heartbeat from ${nodeId}: ${error.message}`);
     }
 };
 
 /**
  * Handler for log messages from nodes
- * @param {string} nodeId - ID of the sending node
- * @param {Object} data - Message data
  */
 exports.log = async (nodeId, data) => {
     try {
         // Validate log data
         if (!data.level || !data.message) {
-            logger.warn('Invalid log data received', { nodeId, data });
+            console.warn(`Invalid log data received from ${nodeId}`);
             return;
         }
 
@@ -64,25 +55,23 @@ exports.log = async (nodeId, data) => {
             metadata: data.metadata || {}
         }).save();
 
-        // Forward critical logs to sentinel logger
+        // Forward critical logs to console
         if (data.level === 'error' || data.level === 'warn') {
-            logger[data.level](`[Node: ${nodeId}] ${data.message}`, data.metadata || {});
+            console[data.level](`[Node: ${nodeId}] ${data.message}`);
         }
     } catch (error) {
-        logger.error('Error processing log message', { nodeId, error: error.message });
+        console.error(`Error processing log message from ${nodeId}: ${error.message}`);
     }
 };
 
 /**
  * Handler for command responses from nodes
- * @param {string} nodeId - ID of the sending node
- * @param {Object} data - Message data
  */
 exports.command_response = async (nodeId, data) => {
     try {
         // Validate response data
         if (!data.commandId) {
-            logger.warn('Invalid command response received', { nodeId, data });
+            console.warn(`Invalid command response received from ${nodeId}`);
             return;
         }
 
@@ -90,10 +79,7 @@ exports.command_response = async (nodeId, data) => {
         const command = await Command.findOne({ commandId: data.commandId });
 
         if (!command) {
-            logger.warn('Command response received for unknown command', {
-                nodeId,
-                commandId: data.commandId
-            });
+            console.warn(`Command response received for unknown command ${data.commandId} from ${nodeId}`);
             return;
         }
 
@@ -105,11 +91,7 @@ exports.command_response = async (nodeId, data) => {
 
         await command.save();
 
-        logger.info(`Command ${data.commandId} completed with status: ${command.status}`, {
-            nodeId,
-            type: command.type,
-            duration: command.completed - command.sent
-        });
+        console.log(`Command ${data.commandId} completed with status: ${command.status}`);
 
         // Notify any waiting processes
         commandService.notifyCommandCompletion(data.commandId, {
@@ -118,18 +100,12 @@ exports.command_response = async (nodeId, data) => {
             error: data.error
         });
     } catch (error) {
-        logger.error('Error processing command response', {
-            nodeId,
-            commandId: data.commandId,
-            error: error.message
-        });
+        console.error(`Error processing command response from ${nodeId}: ${error.message}`);
     }
 };
 
 /**
  * Handler for status updates from nodes
- * @param {string} nodeId - ID of the sending node
- * @param {Object} data - Message data
  */
 exports.status = async (nodeId, data) => {
     try {
@@ -144,21 +120,19 @@ exports.status = async (nodeId, data) => {
             { upsert: true }
         );
 
-        logger.debug(`Status update from ${nodeId}: ${data.status}`, {
-            metadata: data.metadata
-        });
+        console.log(`Status update from ${nodeId}: ${data.status}`);
     } catch (error) {
-        logger.error('Error processing status update', { nodeId, error: error.message });
+        console.error(`Error processing status update from ${nodeId}: ${error.message}`);
     }
 };
 
 /**
  * Handler for initial registration from nodes
- * @param {string} nodeId - ID of the sending node
- * @param {Object} data - Message data
  */
 exports.register = async (nodeId, data) => {
     try {
+        console.log(`Processing registration for node: ${nodeId}`);
+
         // Create or update node in database
         const node = await Node.findOneAndUpdate(
             { nodeId },
@@ -168,34 +142,28 @@ exports.register = async (nodeId, data) => {
                 ip: data.ip,
                 name: data.name || nodeId,
                 ...(data.tags && { tags: data.tags }),
-                ...(data.metadata && { metadata: data.metadata })
+                ...(data.metadata && { metadata: data.metadata }),
+                firstSeen: { $exists: false } ? new Date() : undefined // Only set if not already exists
             },
             { upsert: true, new: true }
         );
 
-        logger.info(`Node registered: ${nodeId}`, {
-            ip: data.ip,
-            name: data.name || nodeId
-        });
+        console.log(`Node registered: ${nodeId} (${data.ip})`);
 
         // Send confirmation back to node
         return { type: 'register_confirmation', success: true, timestamp: new Date().toISOString() };
     } catch (error) {
-        logger.error('Error processing node registration', { nodeId, error: error.message });
+        console.error(`Error processing node registration for ${nodeId}: ${error.message}`);
         return { type: 'register_confirmation', success: false, error: error.message };
     }
 };
 
 /**
  * Handler for pong responses (heartbeat acknowledgements)
- * @param {string} nodeId - ID of the sending node
- * @param {Object} data - Message data
  */
 exports.pong = async (nodeId, data) => {
-    // Simple acknowledgement, just log at debug level
-    logger.debug(`Received pong from ${nodeId}`, {
-        latency: Date.now() - new Date(data.timestamp).getTime()
-    });
+    // Simple acknowledgement, minimal logging
+    // console.log(`Received pong from ${nodeId}`);
 };
 
 // Map all handlers for export
