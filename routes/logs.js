@@ -3,7 +3,7 @@ const express = require('express');
 const { query } = require('express-validator');
 const logService = require('../services/log-service');
 const { validate } = require('../middleware/validation');
-const { authenticateJWT } = require('../middleware/auth');
+const { authenticateJWT, authorizeRoles } = require('../middleware/auth');
 
 const router = express.Router();
 
