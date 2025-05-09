@@ -19,7 +19,10 @@ const logRoutes = require('./routes/logs');
 const app = express();
 
 // Apply middleware
-app.use(helmet()); // Security headers
+app.use(helmet({
+    contentSecurityPolicy: false, // Already disabled for Swagger UI
+    originAgentCluster: false // Disable the Origin-Agent-Cluster header
+})); // Security headers
 app.use(compression()); // Compress responses
 app.use(cors()); // Enable CORS
 app.use(express.json()); // Parse JSON bodies
