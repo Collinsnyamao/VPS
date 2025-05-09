@@ -75,6 +75,12 @@ exports.command_response = async (nodeId, data) => {
             return;
         }
 
+        console.log(`Received command response from ${nodeId} for command ${data.commandId}:`, {
+            success: data.success,
+            result: data.result,
+            error: data.error
+        });
+
         // Find command in database
         const command = await Command.findOne({ commandId: data.commandId });
 
