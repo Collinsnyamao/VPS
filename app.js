@@ -23,6 +23,7 @@ app.use(helmet({
     contentSecurityPolicy: false, // Already disabled for Swagger UI
     originAgentCluster: false // Disable the Origin-Agent-Cluster header
 })); // Security headers
+
 app.use(compression()); // Compress responses
 app.use(cors()); // Enable CORS
 app.use(express.json()); // Parse JSON bodies
@@ -56,6 +57,12 @@ app.get('/health', (req, res) => {
     });
 });
 
+app.use(/^(?!\/api-docs).*/, helmet());
+
+// For the Swagger UI routes, don't use Helmet at all
+app.use('/api-docs', (req, res, next) => next());
+
+// Then set up Swagger UI
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     explorer: true,
     customCss: '.swagger-ui .topbar { display: none }'
