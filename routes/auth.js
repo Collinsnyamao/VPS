@@ -5,7 +5,6 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const config = require('../config/config');
 const User = require('../models/user');
-const logger = require('../config/logger');
 const { validate } = require('../middleware/validation');
 const { authenticateJWT, authorizeRoles } = require('../middleware/auth');
 
@@ -35,7 +34,7 @@ router.post('/login', validate([
 
         // Check if user is active
         if (!user.active) {
-            logger.warn('Login attempt by inactive user', { username, ip: req.ip });
+            console.warn(`Login attempt by inactive user: ${username}`, { ip: req.ip });
             return res.status(401).json({
                 success: false,
                 message: 'Account is inactive. Please contact an administrator.'
@@ -46,7 +45,7 @@ router.post('/login', validate([
         const isMatch = await user.comparePassword(password);
 
         if (!isMatch) {
-            logger.warn('Failed login attempt', { username, ip: req.ip });
+            console.warn(`Failed login attempt for user: ${username}`, { ip: req.ip });
             return res.status(401).json({
                 success: false,
                 message: 'Invalid credentials'
@@ -69,7 +68,7 @@ router.post('/login', validate([
         user.lastLogin = new Date();
         await user.save();
 
-        logger.info('User logged in', { userId: user._id, username: user.username, ip: req.ip });
+        console.log(`User logged in: ${username}`, { userId: user._id, ip: req.ip });
 
         return res.json({
             success: true,
@@ -82,7 +81,7 @@ router.post('/login', validate([
             }
         });
     } catch (error) {
-        logger.error('Login error', { error: error.message });
+        console.error(`Login error: ${error.message}`);
         return res.status(500).json({
             success: false,
             message: 'Server error'
@@ -130,9 +129,7 @@ router.post('/register',
 
             await user.save();
 
-            logger.info('New user registered', {
-                userId: user._id,
-                username,
+            console.log(`New user registered: ${username}`, {
                 role,
                 createdBy: req.user.username
             });
@@ -148,7 +145,7 @@ router.post('/register',
                 }
             });
         } catch (error) {
-            logger.error('User registration error', { error: error.message });
+            console.error(`User registration error: ${error.message}`);
             return res.status(500).json({
                 success: false,
                 message: 'Server error'
@@ -178,7 +175,7 @@ router.get('/profile', authenticateJWT, async (req, res) => {
             user
         });
     } catch (error) {
-        logger.error('Profile retrieval error', { error: error.message });
+        console.error(`Profile retrieval error: ${error.message}`);
         return res.status(500).json({
             success: false,
             message: 'Server error'
@@ -225,14 +222,14 @@ router.put('/change-password',
             user.password = newPassword;
             await user.save();
 
-            logger.info('User changed password', { userId: user._id });
+            console.log(`User ${user.username} changed password`);
 
             return res.json({
                 success: true,
                 message: 'Password updated successfully'
             });
         } catch (error) {
-            logger.error('Password change error', { error: error.message });
+            console.error(`Password change error: ${error.message}`);
             return res.status(500).json({
                 success: false,
                 message: 'Server error'
@@ -242,4 +239,3 @@ router.put('/change-password',
 );
 
 module.exports = router;
-

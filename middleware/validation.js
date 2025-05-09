@@ -1,6 +1,5 @@
 // middleware/validation.js
 const { validationResult } = require('express-validator');
-const logger = require('../config/logger');
 
 /**
  * Middleware to validate request data using express-validator
@@ -14,8 +13,7 @@ exports.validate = (validations) => {
             return next();
         }
 
-        logger.debug('Validation error in request', {
-            path: req.path,
+        console.log(`Validation error in request to ${req.path}`, {
             errors: errors.array(),
             body: req.body
         });

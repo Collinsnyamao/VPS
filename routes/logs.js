@@ -1,8 +1,7 @@
 // routes/logs.js
 const express = require('express');
-const { param, query } = require('express-validator');
+const { query } = require('express-validator');
 const logService = require('../services/log-service');
-const logger = require('../config/logger');
 const { validate } = require('../middleware/validation');
 const { authenticateJWT } = require('../middleware/auth');
 
@@ -15,6 +14,10 @@ const router = express.Router();
  */
 router.get('/',
     authenticateJWT,
+    validate([
+        query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+        query('limit').optional().isInt({ min: 1, max: 1000 }).withMessage('Limit must be between 1 and 1000')
+    ]),
     async (req, res) => {
         try {
             const filters = {
@@ -30,6 +33,8 @@ router.get('/',
                 limit: req.query.limit ? parseInt(req.query.limit) : 100
             };
 
+            console.log(`Getting logs with filters`, filters);
+
             const result = await logService.getLogs(filters, pagination);
 
             return res.json({
@@ -38,7 +43,7 @@ router.get('/',
                 pagination: result.pagination
             });
         } catch (error) {
-            logger.error('Error getting logs', { error: error.message });
+            console.error(`Error getting logs: ${error.message}`);
             return res.status(500).json({
                 success: false,
                 message: 'Server error'
@@ -63,6 +68,8 @@ router.get('/stats',
                 timeRange: req.query.timeRange
             };
 
+            console.log(`Getting log statistics with filters`, filters);
+
             const stats = await logService.getLogStats(filters);
 
             return res.json({
@@ -70,7 +77,41 @@ router.get('/stats',
                 stats
             });
         } catch (error) {
-            logger.error('Error getting log stats', { error: error.message });
+            console.error(`Error getting log stats: ${error.message}`);
+            return res.status(500).json({
+                success: false,
+                message: 'Server error'
+            });
+        }
+    }
+);
+
+/**
+ * @route   DELETE /api/logs/cleanup
+ * @desc    Clean up old logs
+ * @access  Private/Admin
+ */
+router.delete('/cleanup',
+    authenticateJWT,
+    authorizeRoles(['admin']),
+    validate([
+        query('days').optional().isInt({ min: 1 }).withMessage('Days must be a positive integer')
+    ]),
+    async (req, res) => {
+        try {
+            const days = req.query.days ? parseInt(req.query.days) : 30;
+
+            console.log(`Cleaning up logs older than ${days} days`);
+
+            const count = await logService.cleanupOldLogs(days);
+
+            return res.json({
+                success: true,
+                message: `Successfully cleaned up ${count} old logs`,
+                count
+            });
+        } catch (error) {
+            console.error(`Error cleaning up logs: ${error.message}`);
             return res.status(500).json({
                 success: false,
                 message: 'Server error'

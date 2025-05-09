@@ -51,29 +51,6 @@ const commandSchema = new mongoose.Schema({
 commandSchema.index({ nodeId: 1, status: 1 });
 commandSchema.index({ nodeId: 1, createdAt: -1 });
 
-// Static method to check for pending commands for a node
-commandSchema.statics.getPendingCommands = function (nodeId) {
-    return this.find({
-        nodeId,
-        status: { $in: ['pending', 'sent'] }
-    }).sort({ createdAt: 1 });
-};
-
-// Static method to mark a command as timed out
-commandSchema.statics.timeoutCommands = function (thresholdMs = 300000) { // Default 5 minutes
-    const cutoffTime = new Date(Date.now() - thresholdMs);
-
-    return this.updateMany(
-        {
-            status: { $in: ['pending', 'sent'] },
-            updatedAt: { $lt: cutoffTime }
-        },
-        {
-            $set: { status: 'timeout' }
-        }
-    );
-};
-
 const Command = mongoose.model('Command', commandSchema);
 
 module.exports = Command;

@@ -2,7 +2,6 @@
 const jwt = require('jsonwebtoken');
 const config = require('../config/config');
 const User = require('../models/user');
-const logger = require('../config/logger');
 
 /**
  * Middleware to authenticate API requests using JWT
@@ -24,7 +23,7 @@ exports.authenticateJWT = (req, res, next) => {
         req.user = decoded;
         next();
     } catch (error) {
-        logger.warn('JWT authentication failed', { error: error.message, ip: req.ip });
+        console.warn(`JWT authentication failed: ${error.message}`, { ip: req.ip });
         return res.status(403).json({
             success: false,
             message: 'Invalid or expired token.'
@@ -56,11 +55,9 @@ exports.authorizeRoles = (roles) => {
             }
 
             if (!roles.includes(user.role)) {
-                logger.warn('Unauthorized access attempt', {
-                    userId: user._id,
-                    userRole: user.role,
-                    requiredRoles: roles,
-                    path: req.path
+                console.warn(`Unauthorized access attempt by ${user.username} (${user.role})`, {
+                    path: req.path,
+                    requiredRoles: roles
                 });
 
                 return res.status(403).json({
@@ -73,7 +70,7 @@ exports.authorizeRoles = (roles) => {
             req.user = user;
             next();
         } catch (error) {
-            logger.error('Error in role authorization', { error: error.message });
+            console.error(`Error in role authorization: ${error.message}`);
             return res.status(500).json({
                 success: false,
                 message: 'Internal server error.'
@@ -89,8 +86,7 @@ exports.authenticateNode = (req, res, next) => {
     const nodeToken = req.headers['x-node-secret'];
 
     if (!nodeToken || nodeToken !== config.security.nodeSecret) {
-        logger.warn('Node authentication failed', {
-            ip: req.ip,
+        console.warn(`Node authentication failed from ${req.ip}`, {
             nodeId: req.headers['x-node-id'] || 'unknown'
         });
 

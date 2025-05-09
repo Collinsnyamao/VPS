@@ -77,13 +77,6 @@ nodeSchema.methods.isActive = function (thresholdMs = 60000) { // Default 1 minu
     return this.status === 'online' && (Date.now() - this.lastSeen) < thresholdMs;
 };
 
-// Sanitize data for JSON response
-nodeSchema.methods.toJSON = function () {
-    const obj = this.toObject();
-    delete obj.metadata;
-    return obj;
-};
-
 // Static method to find active nodes
 nodeSchema.statics.findActive = function (thresholdMs = 60000) {
     const cutoffTime = new Date(Date.now() - thresholdMs);

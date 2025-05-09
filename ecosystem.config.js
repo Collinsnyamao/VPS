@@ -1,3 +1,4 @@
+// ecosystem.config.js
 module.exports = {
     apps: [
         {
@@ -14,18 +15,14 @@ module.exports = {
                 JWT_SECRET: 'YVcyFt+JcFVxnbGpfMdfhu0yGSodkjsAOKLHIcI5D5Y=',
                 JWT_EXPIRES_IN: '1d',
                 NODE_SECRET: 'tZHR/XM3wFQZ9NAYjXCgjLtznD16SQY+K1mY+BW37QI=',
-                LOG_LEVEL: 'info',
-                LOG_MAX_FILES: '14d',
-                LOG_DIRECTORY: '/opt/sentinel-vps/logs',
-                RATE_LIMIT_WINDOW: 900000,
-                RATE_LIMIT_MAX: 100,
                 WS_HEARTBEAT_INTERVAL: 30000,
                 WS_HEARTBEAT_TIMEOUT: 60000,
+                RATE_LIMIT_WINDOW: 900000,
+                RATE_LIMIT_MAX: 100
             },
-            output: 'STDOUT',  // Send stdout to terminal
-            error: 'STDERR',   // Send stderr to terminal
-            log_type: 'json',
-            merge_logs: true
+            output: 'logs/out.log',  // Capture console.log output
+            error: 'logs/error.log', // Capture console.error output
+            log_date_format: 'YYYY-MM-DD HH:mm:ss'
         }
     ]
 };
