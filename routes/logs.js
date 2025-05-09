@@ -121,3 +121,103 @@ router.delete('/cleanup',
 );
 
 module.exports = router;
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Log:
+ *       type: object
+ *       properties:
+ *         nodeId:
+ *           type: string
+ *         timestamp:
+ *           type: string
+ *           format: date-time
+ *         level:
+ *           type: string
+ *           enum: [error, warn, info, http, verbose, debug, silly]
+ *         message:
+ *           type: string
+ *         metadata:
+ *           type: object
+ */
+
+/**
+ * @swagger
+ * /api/logs:
+ *   get:
+ *     summary: Get logs with optional filtering
+ *     tags: [Logs]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: nodeId
+ *         schema:
+ *           type: string
+ *         description: Filter by node ID
+ *       - in: query
+ *         name: level
+ *         schema:
+ *           type: string
+ *           enum: [error, warn, info, http, verbose, debug, silly]
+ *         description: Filter by log level
+ *       - in: query
+ *         name: message
+ *         schema:
+ *           type: string
+ *         description: Filter by message content
+ *       - in: query
+ *         name: startDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter by start date
+ *       - in: query
+ *         name: endDate
+ *         schema:
+ *           type: string
+ *           format: date-time
+ *         description: Filter by end date
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 1000
+ *           default: 100
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: List of logs
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 logs:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Log'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     total:
+ *                       type: integer
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     pages:
+ *                       type: integer
+ */

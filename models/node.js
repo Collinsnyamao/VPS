@@ -89,3 +89,61 @@ nodeSchema.statics.findActive = function (thresholdMs = 60000) {
 const Node = mongoose.model('Node', nodeSchema);
 
 module.exports = Node;
+
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Node:
+ *       type: object
+ *       required:
+ *         - nodeId
+ *         - ip
+ *       properties:
+ *         nodeId:
+ *           type: string
+ *           description: Unique identifier for the node
+ *         name:
+ *           type: string
+ *           description: Display name for the node
+ *         ip:
+ *           type: string
+ *           description: IP address of the node
+ *         status:
+ *           type: string
+ *           enum: [online, offline, warning]
+ *           default: offline
+ *           description: Current status of the node
+ *         lastSeen:
+ *           type: string
+ *           format: date-time
+ *           description: Last time the node was seen
+ *         firstSeen:
+ *           type: string
+ *           format: date-time
+ *           description: When the node was first registered
+ *         metrics:
+ *           type: object
+ *           properties:
+ *             cpuUsage:
+ *               type: number
+ *               description: CPU usage percentage
+ *             memoryUsage:
+ *               type: number
+ *               description: Memory usage percentage
+ *             diskUsage:
+ *               type: number
+ *               description: Disk usage percentage
+ *             uptime:
+ *               type: number
+ *               description: System uptime in seconds
+ *         tags:
+ *           type: array
+ *           items:
+ *             type: string
+ *           description: Tags for categorizing nodes
+ *         metadata:
+ *           type: object
+ *           description: Additional metadata
+ */

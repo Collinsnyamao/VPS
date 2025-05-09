@@ -358,3 +358,127 @@ router.get('/:nodeId/metrics',
 );
 
 module.exports = router;
+
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Node:
+ *       type: object
+ *       properties:
+ *         nodeId:
+ *           type: string
+ *         name:
+ *           type: string
+ *         ip:
+ *           type: string
+ *         status:
+ *           type: string
+ *           enum: [online, offline, warning]
+ *         lastSeen:
+ *           type: string
+ *           format: date-time
+ *         metrics:
+ *           type: object
+ *           properties:
+ *             cpuUsage:
+ *               type: number
+ *             memoryUsage:
+ *               type: number
+ *             diskUsage:
+ *               type: number
+ *             uptime:
+ *               type: number
+ *         tags:
+ *           type: array
+ *           items:
+ *             type: string
+ *         connected:
+ *           type: boolean
+ */
+
+/**
+ * @swagger
+ * /api/nodes:
+ *   get:
+ *     summary: Get all nodes with optional filtering
+ *     tags: [Nodes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [online, offline, warning]
+ *         description: Filter by node status
+ *       - in: query
+ *         name: tags
+ *         schema:
+ *           type: string
+ *         description: Filter by tags (comma-separated)
+ *     responses:
+ *       200:
+ *         description: List of nodes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 count:
+ *                   type: integer
+ *                 nodes:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Node'
+ */
+
+/**
+ * @swagger
+ * /api/nodes/{nodeId}/command:
+ *   post:
+ *     summary: Send a command to a node
+ *     tags: [Nodes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: nodeId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the node
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - type
+ *             properties:
+ *               type:
+ *                 type: string
+ *                 description: Command type
+ *                 enum: [status, system, disk, exec, restart, ping]
+ *               parameters:
+ *                 type: object
+ *                 description: Command parameters
+ *               waitForResponse:
+ *                 type: boolean
+ *                 default: true
+ *                 description: Whether to wait for response
+ *               timeout:
+ *                 type: integer
+ *                 description: Command timeout in milliseconds
+ *     responses:
+ *       200:
+ *         description: Command executed successfully
+ *       404:
+ *         description: Node not found or not connected
+ *       408:
+ *         description: Command timed out
+ */
